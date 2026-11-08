@@ -35,9 +35,9 @@ def starts_turn(rec):
 
 def ask_text(name, tool_input):
     if name == 'ExitPlanMode':
-        return 'Approvare il piano?'
+        return 'Approve the plan?'
     questions = tool_input.get('questions') or []
-    return ' / '.join(q.get('question', '') for q in questions if isinstance(q, dict)) or 'Domanda in attesa'
+    return ' / '.join(q.get('question', '') for q in questions if isinstance(q, dict)) or 'Pending question'
 
 
 def read_tail_records(path):

@@ -1,8 +1,8 @@
 # session-watch
 
-A Claude Code mod that keeps a **Sessioni** pane beside the chat with a summary of every Claude Code session running on the same machine with Remote Control on. Every few minutes it reads each session's latest turn, asks Claude Haiku whether the session is waiting on you, and marks the ones that are with an orange dot. A click on a row opens that session on claude.ai with Remote Control.
+A Claude Code mod that keeps a **Sessions** pane beside the chat with a summary of every Claude Code session running on the same machine with Remote Control on. On a timer it reads each session's latest turn, asks Claude Haiku whether the session is waiting on you, and marks the ones that are with an orange dot. A click on a row opens that session on claude.ai with Remote Control.
 
-The pane's texts are in Italian.
+The question and the summary of each session are written in the language of that session's latest message.
 
 ## Install
 
@@ -30,12 +30,12 @@ Every session that loads the mod runs its own scan and its own Haiku calls. To h
 
 ## Use
 
-- **Ogni N min**: how often the pane refreshes (1, 2, 3, 5, 10, 15, 30 or 60 minutes; the mobile app steps through them with a button). While the timer runs, a countdown to the next refresh shows beside the session count.
-- **Ferma / Avvia**: stops or starts the timer.
-- **Aggiorna**: refreshes now.
+- **Every N min**: how often the pane refreshes (1, 2, 3, 5, 10, 15, 30 or 60 minutes; the mobile app steps through them with a button). While the timer runs, a countdown to the next refresh shows beside the session count.
+- **Stop / Start**: stops or starts the timer.
+- **Refresh**: refreshes now.
 - `/session-watch` opens the pane; `/session-watch start`, `stop` or `now` act as the buttons; `/session-watch <minutes>` (1 to 120) sets the period.
 
-The status line shows how many sessions have a question. Verdicts are cached by the content of each session's latest turn, so an unchanged session is not sent to the model again.
+Sessions waiting on you come first, then the ones working, then the idle ones. The status line shows how many sessions have a question. Verdicts are cached by the content of each session's latest turn, so an unchanged session is not sent to the model again.
 
 ## Development
 

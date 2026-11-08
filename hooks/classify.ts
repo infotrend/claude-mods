@@ -8,7 +8,7 @@ const MODEL_TIMEOUT_MS = 45_000
 const HEURISTIC_WINDOW = 800
 const ASK_PATTERN = /(tocca a te|ti spett|tuo ok|tuoi ok|per te:|serve il tuo|servono i tuoi|vuoi che|devi decidere|dimmi tu|aspetto (il )?tuo)/i
 
-const SYSTEM = 'You triage the latest message of a coding-agent session for its owner, who reads Italian. Reply with one JSON object and nothing else.'
+const SYSTEM = 'You triage the latest message of a coding-agent session for its owner. Reply with one JSON object and nothing else.'
 
 export function clip(text: string, limit = MAX_LINE): string {
   const flat = text.replace(/[*`_#>]/g, '').replace(/\s+/g, ' ').trim()
@@ -32,9 +32,9 @@ ${session.lastText}
 >>>
 
 Reply with {"hasQuestion": boolean, "question": string, "summary": string}.
-- hasQuestion: true only when the message waits on the user: a direct question to them, a decision, approval or OK they must give, or something they must do before the session can go on (for example "Vuoi che faccia push?", "Tocca a te", "servono i tuoi OK", a list of decisions for the user). Progress narration, reports, plans the session carries out itself and requests addressed to another session are false.
-- question: when hasQuestion, what the user must answer or do, in Italian, at most 110 characters, several asks joined with "; "; otherwise "".
-- summary: in Italian, at most 110 characters, what the session has done or is doing now, without repeating the question.`
+- hasQuestion: true only when the message waits on the user: a direct question to them, a decision, approval or OK they must give, or something they must do before the session can go on (for example "Should I push?", "Over to you", "I need your OK", "Vuoi che faccia push?", "Tocca a te", a list of decisions for the user). Progress narration, reports, plans the session carries out itself and requests addressed to another session are false.
+- question: when hasQuestion, what the user must answer or do, in the language the message is written in, at most 110 characters, several asks joined with "; "; otherwise "".
+- summary: in the language the message is written in, at most 110 characters, what the session has done or is doing now, without repeating the question.`
 }
 
 function parseVerdict(text: string): Verdict | undefined {
@@ -68,8 +68,8 @@ export function heuristicVerdict(session: ScannedSession): Verdict {
   const questionLines = ending.split('\n').map(one => one.trim()).filter(one => one.endsWith('?'))
   const questionLine = questionLines[questionLines.length - 1] ?? ''
   const hasQuestion = Boolean(forced || questionLine || ASK_PATTERN.test(ending))
-  const question = hasQuestion ? clip(forced || questionLine || 'Aspetta una tua risposta') : ''
-  const summary = clip(firstSentence(session.lastText)) || (session.status === 'busy' ? 'Al lavoro' : 'Nessun messaggio recente')
+  const question = hasQuestion ? clip(forced || questionLine || 'Waiting for your answer') : ''
+  const summary = clip(firstSentence(session.lastText)) || (session.status === 'busy' ? 'Working' : 'No recent message')
 
   return { hasQuestion, question, summary, source: 'heuristic' }
 }
@@ -77,7 +77,7 @@ export function heuristicVerdict(session: ScannedSession): Verdict {
 export async function classify($: EngineInterface, session: ScannedSession): Promise<Verdict> {
   const forced = forcedAsk(session)
   if (!session.lastText && !forced) {
-    return { hasQuestion: false, question: '', summary: session.status === 'busy' ? 'Al lavoro' : 'Nessun messaggio recente', source: 'model' }
+    return { hasQuestion: false, question: '', summary: session.status === 'busy' ? 'Working' : 'No recent message', source: 'model' }
   }
   const result = await $.model.complete({ model: MODEL, system: SYSTEM, prompt: buildPrompt(session), maxTokens: 400, timeoutMs: MODEL_TIMEOUT_MS })
   const parsed = result.isAnswered ? parseVerdict(result.text) : undefined

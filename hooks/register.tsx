@@ -7,12 +7,13 @@ import { countdownLabel, DEFAULT_MINUTES, minuteOptions, nextMinutes, parseMinut
 import { SCANNER_SOURCE } from './scanner'
 
 const PANE = 'session-watch'
-const PANE_TITLE = 'Sessioni'
+const PANE_TITLE = 'Sessions'
 const SECOND_MS = 1000
 const MINUTE_MS = 60 * SECOND_MS
 const SCAN_TIMEOUT_MS = 90_000
 const CONCURRENCY = 4
-const VERDICTS_KEY = 'verdicts'
+// Bumped with the English texts, so no verdict cached with the older wording is shown again.
+const VERDICTS_KEY = 'verdicts-2'
 const RUNNING_KEY = 'isRunning'
 const MINUTES_KEY = 'periodMinutes'
 const ORANGE = '#f97316'
@@ -60,16 +61,16 @@ function ageLabel(minutes: number | null): string {
     return ''
   }
   if (minutes < 1) {
-    return 'adesso'
+    return 'just now'
   }
   if (minutes < 60) {
-    return `${minutes} min fa`
+    return `${minutes} min ago`
   }
   if (minutes < 24 * 60) {
-    return `${Math.floor(minutes / 60)} h fa`
+    return `${Math.floor(minutes / 60)} h ago`
   }
 
-  return `${Math.floor(minutes / (24 * 60))} g fa`
+  return `${Math.floor(minutes / (24 * 60))} d ago`
 }
 
 function errorText(error: unknown): string {
@@ -100,8 +101,8 @@ function watched(one: ScannedSession, verdict: Verdict): WatchedSession {
 
 function publishStatus($: EngineInterface, sessions: readonly WatchedSession[], running: boolean): void {
   const questions = sessions.filter(one => one.verdict.hasQuestion).length
-  const head = questions === 0 ? 'Sessioni: nessuna domanda' : `● ${questions} ${questions === 1 ? 'sessione ha' : 'sessioni hanno'} una domanda`
-  $.ui.status(running ? head : `${head} (timer fermo)`)
+  const head = questions === 0 ? 'Sessions: no questions' : `● ${questions} ${questions === 1 ? 'session has' : 'sessions have'} a question`
+  $.ui.status(running ? head : `${head} (timer stopped)`)
 }
 
 let timer: Timer | undefined
@@ -128,7 +129,7 @@ async function refresh($: EngineInterface): Promise<void> {
   } catch (error) {
     const message = errorText(error)
     await update($, snapshot, previous => ({ sessions: previous?.sessions ?? [], scannedAt: previous?.scannedAt ?? '', error: message }))
-    $.ui.status('Sessioni: aggiornamento non riuscito')
+    $.ui.status('Sessions: refresh failed')
   } finally {
     isScanning = false
     await update($, isRefreshing, () => false)
@@ -213,7 +214,7 @@ async function cyclePeriod($: EngineInterface): Promise<void> {
 
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
-    await $.command.register({ name: 'session-watch', description: 'Riepilogo delle sessioni con Remote Control: apre il pannello; start, stop, now, o i minuti del timer (1-120)', argumentHint: 'start | stop | now | <minuti>' })
+    await $.command.register({ name: 'session-watch', description: 'Summary of the sessions with Remote Control: opens the pane; start, stop, now, or the timer\'s minutes (1-120)', argumentHint: 'start | stop | now | <minutes>' })
     const running = (await $.store.get(RUNNING_KEY)) !== false
     const minutes = storedMinutes(await $.store.get(MINUTES_KEY))
     await update($, isRunning, () => running)
@@ -235,31 +236,31 @@ export const register: Register = on => {
     if (action === 'start') {
       await setRunning($, true)
 
-      return { text: `Riepilogo delle sessioni: aggiornamento ogni ${await read($, periodMinutes)} min avviato.` }
+      return { text: `Session watch: refreshing every ${await read($, periodMinutes)} min.` }
     }
     if (action === 'stop') {
       await setRunning($, false)
 
-      return { text: 'Riepilogo delle sessioni: aggiornamento automatico fermato.' }
+      return { text: 'Session watch: automatic refresh stopped.' }
     }
     if (action === 'now') {
       refreshSoon($)
 
-      return { text: 'Riepilogo delle sessioni: aggiornamento in corso.' }
+      return { text: 'Session watch: refreshing now.' }
     }
     if (action !== '') {
       const minutes = parseMinutes(action)
       if (minutes === undefined) {
-        return { text: `Non capisco "${e.args.trim()}": usa start, stop, now o i minuti del timer, da 1 a 120.` }
+        return { text: `Unknown argument "${e.args.trim()}": use start, stop, now or the timer's minutes, from 1 to 120.` }
       }
       await setPeriod($, minutes)
       const running = await read($, isRunning)
 
-      return { text: `Riepilogo delle sessioni: aggiornamento ogni ${minutes} min${running ? '.' : ' (il timer è fermo: parte con start).'}` }
+      return { text: `Session watch: refreshing every ${minutes} min${running ? '.' : ' once the timer starts (it is stopped: use start).'}` }
     }
     await $.ui.open({ id: PANE, title: PANE_TITLE })
 
-    return { text: 'Pannello delle sessioni aperto.' }
+    return { text: 'Sessions pane opened.' }
   })
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
@@ -273,39 +274,39 @@ export const register: Register = on => {
     const countdown = running && left !== null ? ` · ${countdownLabel(left)}` : ''
     const sessions = current?.sessions ?? []
     const questions = sessions.filter(one => one.verdict.hasQuestion).length
-    const updated = current?.scannedAt ? `aggiornato alle ${current.scannedAt}` : 'mai aggiornato'
-    const timerLabel = running ? `ogni ${minutes} min` : 'timer fermo'
+    const updated = current?.scannedAt ? `updated at ${current.scannedAt}` : 'never updated'
+    const timerLabel = running ? `every ${minutes} min` : 'timer stopped'
 
     return (
       <Box flexDirection="column">
         <Box flexDirection="row" justifyContent="space-between" alignItems="center" columnGap={1} flexWrap="wrap">
           <Box flexDirection="column">
             <Text weight="semibold" color={questions > 0 ? ORANGE : undefined}>
-              {questions === 0 ? 'Nessuna domanda' : `${questions} ${questions === 1 ? 'domanda' : 'domande'}`}
-              <Text dimColor weight="regular"> · {sessions.length} sessioni{countdown}</Text>
+              {questions === 0 ? 'No questions' : `${questions} ${questions === 1 ? 'question' : 'questions'}`}
+              <Text dimColor weight="regular"> · {sessions.length} {sessions.length === 1 ? 'session' : 'sessions'}{countdown}</Text>
             </Text>
-            <Text dimColor>{refreshing ? 'Aggiornamento in corso…' : `${updated} · ${timerLabel}`}</Text>
+            <Text dimColor>{refreshing ? 'Refreshing…' : `${updated} · ${timerLabel}`}</Text>
           </Box>
           <Box flexDirection="row" alignItems="center" columnGap={1}>
             {e.surface !== 'mobile' && 'Select' in elements ? (
-              <elements.Select key="period" label="Ogni" options={minuteOptions(minutes)} value={String(minutes)} onSelect={(value: string) => pickPeriod($, value)} />
+              <elements.Select key="period" label="Every" options={minuteOptions(minutes)} value={String(minutes)} onSelect={(value: string) => pickPeriod($, value)} />
             ) : (
-              <Button key="period" label={`Ogni ${minutes} min`} onPress={() => cyclePeriod($)} />
+              <Button key="period" label={`Every ${minutes} min`} onPress={() => cyclePeriod($)} />
             )}
-            <Button key="toggle" label={running ? 'Ferma' : 'Avvia'} variant={running ? 'secondary' : 'primary'} onPress={() => toggleRunning($)} />
-            <Button key="now" label="Aggiorna" onPress={() => refreshSoon($)} />
+            <Button key="toggle" label={running ? 'Stop' : 'Start'} variant={running ? 'secondary' : 'primary'} onPress={() => toggleRunning($)} />
+            <Button key="now" label="Refresh" onPress={() => refreshSoon($)} />
           </Box>
         </Box>
-        {current?.error ? <Text color="error">Aggiornamento non riuscito: {current.error}</Text> : null}
-        {current === null && !refreshing ? <Text dimColor>Premi Aggiorna per leggere le sessioni.</Text> : null}
-        {sessions.length > 0 ? <Text dimColor>Clic su una sessione per aprirla con Remote Control.</Text> : null}
+        {current?.error ? <Text color="error">Refresh failed: {current.error}</Text> : null}
+        {current === null && !refreshing ? <Text dimColor>Press Refresh to read the sessions.</Text> : null}
+        {sessions.length > 0 ? <Text dimColor>Click a session to open it with Remote Control.</Text> : null}
         {sessions.map(one => (
           <Box key={one.sessionId} flexDirection="column" marginTop={1}>
             <Text>
               <Text color={one.verdict.hasQuestion ? ORANGE : 'inactive'}>{one.verdict.hasQuestion ? '●' : '○'}</Text>{' '}
               <Link href={one.url}>
                 <Text weight="semibold">{one.name}</Text>
-                <Text dimColor> · {one.status === 'busy' ? 'al lavoro' : 'ferma'}{one.ageMinutes === null ? '' : ` · ${ageLabel(one.ageMinutes)}`}</Text>
+                <Text dimColor> · {one.status === 'busy' ? 'working' : 'idle'}{one.ageMinutes === null ? '' : ` · ${ageLabel(one.ageMinutes)}`}</Text>
               </Link>
             </Text>
             {one.verdict.hasQuestion ? <Text color={ORANGE}>  <Link href={one.url}>{one.verdict.question}</Link></Text> : null}

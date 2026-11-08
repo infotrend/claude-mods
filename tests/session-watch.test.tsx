@@ -4,7 +4,7 @@ import { heuristicVerdict } from '../hooks/classify'
 import { countdownLabel, DEFAULT_MINUTES, minuteOptions, nextMinutes, parseMinutes, storedMinutes } from '../hooks/period'
 import type { ScannedSession } from '../types'
 
-const PANE = { plugin: 'session-watch', component: 'Pane', requestId: 'session-watch', props: { title: 'Sessioni', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 30 }, view: {} } } as const
+const PANE = { plugin: 'session-watch', component: 'Pane', requestId: 'session-watch', props: { title: 'Sessions', isFocused: false, bodyColumns: 60, placement: 'dock', scroll: { offset: 0, bodyRows: 30 }, view: {} } } as const
 const USAGE = { input_tokens: 10, output_tokens: 10, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
 
 function session(lastText: string, extra: Partial<ScannedSession> = {}): ScannedSession {
@@ -77,19 +77,19 @@ test('the countdown shows beside the session count only while the timer runs', a
   on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify({ scannedAt: '10:00', sessions: [] }), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
-  if ((await ui.find({ key: 'toggle' }))?.props.label === 'Avvia') {
+  if ((await ui.find({ key: 'toggle' }))?.props.label === 'Start') {
     await ui.press({ key: 'toggle' })
   }
   await ui.select({ key: 'period', value: '3' })
   await ui.select({ key: 'period', value: '2' })
   await clock.advance(30_000)
 
-  expect(await ui.find({ type: 'Text', text: /sessioni · 1:30$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /sessions · 1:30$/ })).toBeDefined()
 
   await ui.press({ key: 'toggle' })
   await clock.advance(5_000)
 
-  expect(await ui.find({ type: 'Text', text: /sessioni · \d+:\d\d/ })).toBeUndefined()
+  expect(await ui.find({ type: 'Text', text: /sessions · \d+:\d\d/ })).toBeUndefined()
   await ui.unmount()
 })
 
@@ -112,7 +112,7 @@ test('the toggle stops and starts the timer, on every surface', async ($, on) =>
     await ui.press({ key: 'toggle' })
     const after = (await ui.find({ key: 'toggle' }))?.props.label
 
-    expect([before, after].sort()).toEqual(['Avvia', 'Ferma'])
+    expect([before, after].sort()).toEqual(['Start', 'Stop'])
     await ui.unmount()
   }
 })
@@ -143,8 +143,8 @@ test('on mobile a button steps the period, as it has no picker', async ($, on) =
   await ui.press({ key: 'period' })
   const after = String((await ui.find({ key: 'period' }))?.props.label)
 
-  expect(before).toMatch(/^Ogni \d+ min$/)
-  expect(after).toMatch(/^Ogni \d+ min$/)
+  expect(before).toMatch(/^Every \d+ min$/)
+  expect(after).toMatch(/^Every \d+ min$/)
   expect(after).not.toBe(before)
   await ui.unmount()
 })
@@ -157,11 +157,11 @@ test('the toggle line shows the chosen period while the timer runs', async ($, o
 
   const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
   await ui.select({ key: 'period', value: '10' })
-  if ((await ui.find({ key: 'toggle' }))?.props.label === 'Avvia') {
+  if ((await ui.find({ key: 'toggle' }))?.props.label === 'Start') {
     await ui.press({ key: 'toggle' })
   }
 
-  expect(await ui.find({ type: 'Text', text: /ogni 10 min/ })).toBeDefined()
+  expect(await ui.find({ type: 'Text', text: /every 10 min/ })).toBeDefined()
   await ui.unmount()
 })
 
