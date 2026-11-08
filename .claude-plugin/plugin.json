@@ -1,1 +1,1 @@
-{ "name": "session-watch", "version": "0.2.1", "description": "Summarizes the Remote Control sessions on a timer and marks the ones waiting on a question with an orange dot", "types": "./types/index.d.ts" }
+{ "name": "session-watch", "version": "0.2.2", "description": "Summarizes the Remote Control sessions on a timer and marks the ones waiting on a question with an orange dot", "types": "./types/index.d.ts" }

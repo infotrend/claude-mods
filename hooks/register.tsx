@@ -300,7 +300,6 @@ export const register: Register = on => {
         </Box>
         {current?.error ? <Text color="error">Refresh failed: {current.error}</Text> : null}
         {current === null && !refreshing ? <Text dimColor>Press Refresh to read the sessions.</Text> : null}
-        {sessions.length > 0 ? <Text dimColor>Click a session to open it with Remote Control.</Text> : null}
         {sessions.map(one => (
           <Box key={one.sessionId} flexDirection="column" marginTop={1}>
             <Text>
