@@ -1,0 +1,1 @@
+{ "name": "session-watch", "version": "0.1.0", "description": "Summarizes the Remote Control sessions every 2 minutes and marks the ones waiting on a question with an orange dot", "types": "./types/index.d.ts" }

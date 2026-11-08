@@ -1,0 +1,6 @@
+{
+  "name": "claude-mods",
+  "owner": { "name": "infotrend" },
+  "metadata": { "description": "Claude Code mods by infotrend" },
+  "plugins": [{ "name": "session-watch", "source": "./", "description": "Summarizes the Remote Control sessions on this machine every few minutes and marks the ones waiting on a question with an orange dot" }]
+}
