@@ -35,7 +35,7 @@ Every session that loads the mod runs its own scan and its own Haiku calls. To h
 - **Refresh**: refreshes now.
 - `/session-watch` opens the pane; `/session-watch start`, `stop` or `now` act as the buttons; `/session-watch <minutes>` (1 to 120) sets the period.
 
-Sessions waiting on you come first, then the ones working, then the idle ones. The status line shows how many sessions have a question. Verdicts are cached by the content of each session's latest turn, so an unchanged session is not sent to the model again.
+Sessions waiting on you come first, then the ones working, then the idle ones. A session whose turn has ended while a command or a subagent it started still runs shows as **working in background**. Background commands older than 3 hours are taken for a server or a stale watcher and do not count. The status line shows how many sessions have a question. Verdicts are cached by the content of each session's latest turn, so an unchanged session is not sent to the model again.
 
 ## Development
 

@@ -186,3 +186,27 @@ test('each session row links to its Remote Control session', async ($, on) => {
     await ui.unmount()
   }
 })
+
+test('a session working in background reads so and sorts before the idle ones', async ($, on) => {
+  const clock = mock.clock(on)
+  mock.store(on)
+  const scanned = { scannedAt: '10:00', sessions: [session('Fatto.', { name: 'quiet', sessionId: 'a', ageMinutes: 1 }), session('Aspetto la fine del build.', { name: 'build', sessionId: 'b', status: 'background', ageMinutes: 12 })] }
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+  on('ui.status', () => ({ value: undefined }))
+  on('session.id', () => ({ value: 'self' }))
+  on('process.run', () => ({ value: { exitCode: 0, stdout: JSON.stringify(scanned), stderr: '', isStdoutTruncated: false, isStderrTruncated: false } }))
+  on('model.complete', () => ({ value: { isAnswered: true, text: '{"hasQuestion": false, "question": "", "summary": "Build in corso"}', usage: USAGE } }))
+
+  const ui = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  await ui.press({ key: 'now' })
+  await clock.advance(1)
+  const metas = (await ui.findAll({ type: 'Text', text: /^ · (working|working in background|idle) · / })).map(one => one.text)
+
+  expect(metas).toEqual([' · working in background · 12 min ago', ' · idle · 1 min ago'])
+  await ui.unmount()
+})
+
+test('a session working in background with no message reads as working', async () => {
+  expect(heuristicVerdict(session('', { status: 'background' })).summary).toBe('Working')
+  expect(heuristicVerdict(session('')).summary).toBe('No recent message')
+})

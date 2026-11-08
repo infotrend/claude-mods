@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, Timer } from 'claude-code'
 
-import type { ScannedSession, Snapshot, Verdict, WatchedSession } from '../types'
+import type { ScannedSession, SessionStatus, Snapshot, Verdict, WatchedSession } from '../types'
 import { classify } from './classify'
 import { countdownLabel, DEFAULT_MINUTES, minuteOptions, nextMinutes, parseMinutes, storedMinutes } from './period'
 import { SCANNER_SOURCE } from './scanner'
@@ -17,6 +17,7 @@ const VERDICTS_KEY = 'verdicts-2'
 const RUNNING_KEY = 'isRunning'
 const MINUTES_KEY = 'periodMinutes'
 const ORANGE = '#f97316'
+const STATUS_LABELS: Record<SessionStatus, string> = { busy: 'working', background: 'working in background', idle: 'idle' }
 // What Claude Code itself links a Remote Control session to.
 const REMOTE_SESSION_URL = 'https://claude.ai/code/'
 
@@ -49,7 +50,7 @@ function rank(session: WatchedSession): number {
     return 0
   }
 
-  return session.status === 'busy' ? 1 : 2
+  return session.status === 'idle' ? 2 : 1
 }
 
 function sortSessions(sessions: readonly WatchedSession[]): WatchedSession[] {
@@ -306,7 +307,7 @@ export const register: Register = on => {
               <Text color={one.verdict.hasQuestion ? ORANGE : 'inactive'}>{one.verdict.hasQuestion ? '●' : '○'}</Text>{' '}
               <Link href={one.url}>
                 <Text weight="semibold">{one.name}</Text>
-                <Text dimColor> · {one.status === 'busy' ? 'working' : 'idle'}{one.ageMinutes === null ? '' : ` · ${ageLabel(one.ageMinutes)}`}</Text>
+                <Text dimColor> · {STATUS_LABELS[one.status]}{one.ageMinutes === null ? '' : ` · ${ageLabel(one.ageMinutes)}`}</Text>
               </Link>
             </Text>
             {one.verdict.hasQuestion ? <Text color={ORANGE}>  <Link href={one.url}>{one.verdict.question}</Link></Text> : null}

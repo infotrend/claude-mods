@@ -1,4 +1,6 @@
-export type SessionStatus = 'busy' | 'idle'
+// busy: in a turn. background: its turn has ended while a command or a
+// subagent it started still runs. idle: nothing running.
+export type SessionStatus = 'busy' | 'background' | 'idle'
 
 export type ScannedSession = {
   name: string
